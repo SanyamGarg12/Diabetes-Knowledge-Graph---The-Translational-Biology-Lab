@@ -1,0 +1,67 @@
+# .gitignore for the Diabetes Knowledge Graph Project
+
+# --- Backend (Python) --- #
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Virtual environment
+venv/
+env/
+
+# IDE specific files (e.g., VS Code, PyCharm)
+.vscode/
+.idea/
+
+# SQLite database (if used)
+*.db
+*.sqlite3
+
+# Python build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs and data files
+*.log
+*.csv
+*.json # Ignore if these are generated data, not source
+
+# --- Frontend (Node.js/React) --- #
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Log files
+*.log
+
+# Environment variables file
+.env
+.env.local
+.env.*.local
+
+# npm debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Other generated files
+.DS_Store
+
+# Optional: ignore specific files that are generated
+# package-lock.json # Uncomment if you use yarn or don't commit lock files
+
+# --- Neo4j (if files are in the project directory) ---
+# Assuming Neo4j data is outside the project, but if not:
+# data/
+# logs/
+# databases/
+# transactions/
