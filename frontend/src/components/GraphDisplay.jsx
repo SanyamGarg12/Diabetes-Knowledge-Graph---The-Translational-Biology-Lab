@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
   const containerRef = useRef(null);
   const sigmaRef = useRef(null);
-  const [nodeProperties, setNodeProperties] = useState(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -95,13 +93,6 @@ const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
     // Enhanced node click interaction
     sigma.on("clickNode", ({ node }) => {
       const props = graph.getNodeAttributes(node);
-      setNodeProperties(props.properties);
-
-      // Get node position and convert to screen coordinates
-      const { x, y } = graph.getNodeAttributes(node);
-      const screenCoords = sigma.graphToViewport({ x, y });
-      setPopupPosition({ x: screenCoords.x, y: screenCoords.y });
-
       if (setSelectedNode) setSelectedNode(props);
 
       // Highlight connected nodes
@@ -120,12 +111,12 @@ const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
       });
     });
 
-    // Reset highlights on background click
+    // Reset highlights and node details on background click
     sigma.on("clickStage", () => {
       graph.forEachNode((nodeId) => {
         graph.setNodeAttribute(nodeId, "highlighted", false);
       });
-      setNodeProperties(null);
+      if (setSelectedNode) setSelectedNode(null);
     });
 
     setIsLoading(false);
@@ -154,41 +145,6 @@ const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
           overflow: "hidden",
         }}
       />
-      
-      <AnimatePresence>
-        {nodeProperties && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            className="node-details-popup"
-            style={{
-              position: "absolute",
-              top: `${popupPosition.y}px`,
-              left: `${popupPosition.x}px`,
-              transform: "translate(-50%, -50%)",
-              zIndex: 1000,
-            }}
-          >
-            <div className="node-details-content">
-              <h3>Node Properties</h3>
-              <ul>
-                {Object.entries(nodeProperties).map(([key, value]) => (
-                  <motion.li
-                    key={key}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <strong>{key.replace(/_/g, ' ')}:</strong> {value || "N/A"}
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

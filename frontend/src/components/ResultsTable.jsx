@@ -33,20 +33,15 @@
        
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import "../styles.css";
 
 const ResultsTable = ({ tableData }) => {
   if (!tableData || tableData.length === 0) {
     return (
-      <motion.div
-        className="no-data-message"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <p>No data found.</p>
-      </motion.div>
+      <div className="no-data-message">
+        No table data available for this query.
+      </div>
     );
   }
 

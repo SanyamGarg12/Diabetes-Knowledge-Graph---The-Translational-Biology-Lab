@@ -1,4 +1,3 @@
-# now see the below is my final backend:
 from fastapi import FastAPI, Query
 from neo4j import GraphDatabase
 from fastapi.middleware.cors import CORSMiddleware
@@ -159,9 +158,9 @@ Strictly output only the two required complete Cypher queries on two separate li
         table_query = lines[1].strip()
 
         # Basic validation: Ensure queries look like valid Cypher
-        if not (visualization_query.lower().startswith("match") and " return " in visualization_query.lower()):
+        if not (visualization_query.lower().startswith("match") and "return" in visualization_query.lower()):
              raise ValueError(f"Visualization query does not contain MATCH and RETURN: {visualization_query}")
-        if not (table_query.lower().startswith("match") and " return " in table_query.lower()):
+        if not (table_query.lower().startswith("match") and "return" in table_query.lower()):
              raise ValueError(f"Table query does not contain MATCH and RETURN: {table_query}")
 
         print("Visualization Query from Ollama:\n", visualization_query)
