@@ -1205,15 +1205,27 @@ h3 {
   padding: 0 2rem;
 }
 
-.search-page-title {
-  color: #2c3e50;
-  font-size: 2.5rem;
+.search-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+}
+
+.search-page-title {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
   font-weight: 700;
   background: linear-gradient(120deg, #2c3e50, #3498db);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.search-page-subtitle {
+  font-size: 1.2rem;
+  color: #4a5568;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .query-section {
@@ -1222,6 +1234,69 @@ h3 {
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+}
+
+.search-welcome-container {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.welcome-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.welcome-content h2 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.welcome-content p {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 2rem;
+}
+
+.example-queries {
+  text-align: left;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.example-queries h3 {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.example-queries ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.example-queries li {
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  color: #4a5568;
+  font-size: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.example-queries li:hover {
+  border-color: #3498db;
+  color: #3498db;
+  transform: translateX(5px);
 }
 
 .results-container {
@@ -1239,13 +1314,21 @@ h3 {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.section-title {
-  color: #2c3e50;
-  font-size: 1.5rem;
+.section-header {
   margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  border-bottom: 2px solid #3498db;
-  padding-bottom: 0.5rem;
+}
+
+.section-description {
+  font-size: 1rem;
+  color: #4a5568;
+  margin: 0;
 }
 
 .graph-container {
@@ -1268,11 +1351,21 @@ h3 {
   top: 2rem;
 }
 
+.panel-header {
+  margin-bottom: 1.5rem;
+}
+
 .panel-title {
+  font-size: 1.3rem;
   color: #2c3e50;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.3rem;
   font-weight: 600;
+}
+
+.panel-subtitle {
+  font-size: 0.9rem;
+  color: #4a5568;
+  display: block;
 }
 
 .node-details-content {
@@ -1288,14 +1381,15 @@ h3 {
 }
 
 .node-header h4 {
-  color: #2c3e50;
   font-size: 1.1rem;
+  color: #2c3e50;
   margin: 0 0 0.5rem 0;
 }
 
 .node-type {
-  color: #3498db;
+  display: inline-block;
   font-size: 0.9rem;
+  color: #3498db;
   background: #ebf8ff;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -1336,6 +1430,38 @@ h3 {
   border: 1px solid #e2e8f0;
 }
 
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e2e8f0;
+}
+
+.download-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #3498db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-button:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+.download-icon {
+  font-size: 1.2rem;
+}
+
 .error-container {
   background: #fff5f5;
   border: 1px solid #feb2b2;
@@ -1344,23 +1470,20 @@ h3 {
   margin: 1rem 0;
 }
 
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+}
+
 .error-message {
   color: #c53030;
   margin: 0;
-}
-
-.loading-container {
-  text-align: center;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.loading-message {
-  color: #4a5568;
-  font-size: 1.1rem;
-  margin: 0;
+  font-size: 1rem;
 }
 
 /* Responsive Design */
@@ -1384,12 +1507,32 @@ h3 {
     font-size: 2rem;
   }
 
+  .search-page-subtitle {
+    font-size: 1rem;
+  }
+
   .query-section {
     padding: 1.5rem;
   }
 
+  .search-welcome-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .welcome-content h2 {
+    font-size: 1.8rem;
+  }
+
   .graph-container {
     height: 400px;
+  }
+
+  .example-queries {
+    padding: 1rem;
+  }
+
+  .example-queries li {
+    font-size: 0.95rem;
   }
 }
 
