@@ -3,56 +3,139 @@ import "../styles.css";
 
 const Home = () => {
   return (
-    <div className="page-container">
-      <h1>Understanding Diabetes</h1>
-      <p>
-        <b>Type 2 Diabetes</b> is a chronic condition that affects how your body processes blood sugar (glucose). It occurs when the body becomes resistant to insulin or when the pancreas fails to produce enough insulin to maintain normal glucose levels. Unlike Type 1 Diabetes, which is primarily genetic and autoimmune, Type 2 Diabetes is often linked to lifestyle factors such as diet, physical activity, and weight management.
-        This condition is one of the most common health challenges worldwide, impacting millions of people. If left unmanaged, it can lead to serious complications such as heart disease, nerve damage, kidney problems, and vision loss. However, with the right lifestyle changes, medication, and monitoring, Type 2 Diabetes can be effectively controlled, allowing individuals to lead a healthy and active life.
-      </p>
+    <div className="home-container">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-content">
+          <h1>Understanding Diabetes</h1>
+          <p className="hero-subtitle">
+            Exploring the complex relationships between genes, proteins, and diseases through advanced knowledge graphs
+          </p>
+          <div className="hero-stats">
+            <div className="stat-card">
+              <span className="stat-number">500M+</span>
+              <span className="stat-label">People Affected</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">101M+</span>
+              <span className="stat-label">Cases in India</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">16+</span>
+              <span className="stat-label">Data Sources</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <h2>Why Us?</h2>
-      <p>
-        Our website provides a comprehensive knowledge graph for Translational Biology research, offering insights derived from a vast collection of data sources. By utilizing our platform, researchers and clinicians can explore complex relationships between genes, proteins, diseases, drugs, and more. We distinguish ourselves by integrating data from a wide range of high-quality databases and incorporating information extracted from research papers published between 2000 and 2025 on PubMed, providing you with the most relevant and up-to-date information for your research.
-      </p>
+      {/* Main Content */}
+      <div className="home-content">
+        {/* Overview Section */}
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Type 2 Diabetes Overview</h2>
+            <div className="section-divider"></div>
+          </div>
+          <div className="overview-card">
+            <p>
+              <b>Type 2 Diabetes</b> is a chronic condition that affects how your body processes blood sugar (glucose). It occurs when the body becomes resistant to insulin or when the pancreas fails to produce enough insulin to maintain normal glucose levels. Unlike Type 1 Diabetes, which is primarily genetic and autoimmune, Type 2 Diabetes is often linked to lifestyle factors such as diet, physical activity, and weight management.
+            </p>
+            <p>
+              This condition is one of the most common health challenges worldwide, impacting millions of people. If left unmanaged, it can lead to serious complications such as heart disease, nerve damage, kidney problems, and vision loss. However, with the right lifestyle changes, medication, and monitoring, Type 2 Diabetes can be effectively controlled, allowing individuals to lead a healthy and active life.
+            </p>
+          </div>
+        </section>
 
-      <h2>Epidemiology & Statistics</h2>
-      <p>According to the International Diabetes Federation (IDF), over 500 million people worldwide live with diabetes, and the number is expected to rise significantly in the coming decades.</p>
-      <p>India is often referred to as the "Diabetes Capital of the World", with an alarming increase in Type 2 Diabetes cases over the past few decades. As of 2023, India had over 101 million people living with diabetes, making it one of the most affected countries globally. The rapid urbanization, sedentary lifestyle, high consumption of processed foods, and genetic predisposition have contributed significantly to this rise.</p>
-      
-      <p><b>Key statistics about Type 2 Diabetes in India:</b></p>
-      <ul>
-        <li>Approximately 11.4% of adults in India have diabetes.</li>
-        <li>Urban areas show a higher prevalence (~15-20%) compared to rural regions (~5-7%) due to lifestyle differences.</li>
-        <li>While it was traditionally seen in older adults, cases among younger individuals (20s and 30s) have increased significantly due to unhealthy eating habits and lack of physical activity.</li>
-        <li>Southern and Western states have reported higher prevalence rates compared to Northern and Eastern states.</li>
-      </ul>
+        {/* Why Us Section */}
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Why Choose Our Platform?</h2>
+            <div className="section-divider"></div>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">📊</div>
+              <h3>Comprehensive Knowledge Graph</h3>
+              <p>Explore complex relationships between genes, proteins, diseases, and drugs through our advanced knowledge graph.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🔬</div>
+              <h3>Latest Research</h3>
+              <p>Access information from research papers published between 2000 and 2025 on PubMed.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📈</div>
+              <h3>Data Integration</h3>
+              <p>Integrated data from multiple high-quality biomedical databases for comprehensive insights.</p>
+            </div>
+          </div>
+        </section>
 
-      <h2>Data Sources Used</h2>
-      <p>The data used in this project is sourced from various high-quality biomedical databases. Below are the key databases and their official websites:</p>
-      <ul>
-        <li><a href="https://omim.org/" target="_blank" rel="noopener noreferrer">OMIM (Online Mendelian Inheritance in Man)</a></li>
-        <li><a href="https://www.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">NCBI (National Center for Biotechnology Information)</a></li>
-        <li><a href="https://ctdbase.org/" target="_blank" rel="noopener noreferrer">CTD (Comparative Toxicogenomics Database)</a></li>
-        <li><a href="https://db.idrblab.net/ttd/" target="_blank" rel="noopener noreferrer">TTD (Therapeutic Target Database)</a></li>
-        <li><a href="https://www.genenames.org/" target="_blank" rel="noopener noreferrer">HUGO (HUGO Gene Nomenclature Committee)</a></li>
-        <li><a href="https://mirtarbase.cuhk.edu.cn/" target="_blank" rel="noopener noreferrer">miRTarBase</a></li>
-        <li><a href="https://t2diacod.igib.res.in/" target="_blank" rel="noopener noreferrer">T2Diacod</a></li>
-        <li><a href="https://www.disgenet.org/" target="_blank" rel="noopener noreferrer">DisGeNET</a></li>
-        <li><a href="https://www.rhea-db.org/" target="_blank" rel="noopener noreferrer">Rhea (Biochemical Reactions Database)</a></li>
-        <li><a href="https://www.kegg.jp/" target="_blank" rel="noopener noreferrer">KEGG (Kyoto Encyclopedia of Genes and Genomes)</a></li>
-        <li><a href="http://geneontology.org/" target="_blank" rel="noopener noreferrer">Gene Ontology</a></li>
-        <li><a href="https://alphafold.ebi.ac.uk/" target="_blank" rel="noopener noreferrer">AlphaFold Protein Structure Database</a></li>
-        <li><a href="https://www.uniprot.org/" target="_blank" rel="noopener noreferrer">UniProt (Universal Protein Resource)</a></li>
-        <li><a href="https://www.ebi.ac.uk/interpro/" target="_blank" rel="noopener noreferrer">InterPro (Integrated Protein Family Database)</a></li>
-        <li><a href="https://prosite.expasy.org/" target="_blank" rel="noopener noreferrer">PROSITE (Protein Families and Domains Database)</a></li>
-        <li><a href="https://www.sciencedirect.com/science/article/pii/S2352340923010338" target="_blank" rel="noopener noreferrer">DbKB (Disease Knowledge Base)</a></li>
+        {/* Statistics Section */}
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Epidemiology & Statistics</h2>
+            <div className="section-divider"></div>
+          </div>
+          <div className="stats-container">
+            <div className="stats-card">
+              <h3>Global Impact</h3>
+              <p>According to the International Diabetes Federation (IDF), over 500 million people worldwide live with diabetes, and the number is expected to rise significantly in the coming decades.</p>
+            </div>
+            <div className="stats-card">
+              <h3>India's Challenge</h3>
+              <p>India is often referred to as the "Diabetes Capital of the World", with over 101 million people living with diabetes as of 2023.</p>
+            </div>
+            <div className="stats-card">
+              <h3>Key Statistics</h3>
+              <ul className="stats-list">
+                <li>11.4% of adults in India have diabetes</li>
+                <li>15-20% prevalence in urban areas</li>
+                <li>5-7% prevalence in rural regions</li>
+                <li>Increasing cases among younger individuals</li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
-      </ul>
-
-      
-
-
-      
+        {/* Data Sources Section */}
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Data Sources</h2>
+            <div className="section-divider"></div>
+          </div>
+          <div className="data-sources-grid">
+            {[
+              { name: "OMIM", url: "https://omim.org/" },
+              { name: "NCBI", url: "https://www.ncbi.nlm.nih.gov/" },
+              { name: "CTD", url: "https://ctdbase.org/" },
+              { name: "TTD", url: "https://db.idrblab.net/ttd/" },
+              { name: "HUGO", url: "https://www.genenames.org/" },
+              { name: "miRTarBase", url: "https://mirtarbase.cuhk.edu.cn/" },
+              { name: "T2Diacod", url: "https://t2diacod.igib.res.in/" },
+              { name: "DisGeNET", url: "https://www.disgenet.org/" },
+              { name: "Rhea", url: "https://www.rhea-db.org/" },
+              { name: "KEGG", url: "https://www.kegg.jp/" },
+              { name: "Gene Ontology", url: "http://geneontology.org/" },
+              { name: "AlphaFold", url: "https://alphafold.ebi.ac.uk/" },
+              { name: "UniProt", url: "https://www.uniprot.org/" },
+              { name: "InterPro", url: "https://www.ebi.ac.uk/interpro/" },
+              { name: "PROSITE", url: "https://prosite.expasy.org/" },
+              { name: "DbKB", url: "https://www.sciencedirect.com/science/article/pii/S2352340923010338" }
+            ].map((source, index) => (
+              <a
+                key={index}
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="source-card"
+              >
+                {source.name}
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

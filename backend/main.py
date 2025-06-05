@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import FileResponse
 from neo4j import GraphDatabase
 from fastapi.middleware.cors import CORSMiddleware
 from ollama import Client
 from typing import Dict, Any, List
 import random
 import re
+import os
+from pathlib import Path
 
 # Initialize FastAPI
 app = FastAPI()
@@ -26,6 +29,51 @@ NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "123456789"
 DB_NAME = "diabeteskbnew"
+
+# File paths
+DOWNLOAD_PATH = Path("downloads")
+
+def get_file_size(file_path: Path) -> str:
+    """Convert file size to human readable format"""
+    size_bytes = file_path.stat().st_size
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f} TB"
+
+@app.get("/api/files")
+async def list_files():
+    """
+    List all CSV files in the downloads directory
+    """
+    files = []
+    
+    if DOWNLOAD_PATH.exists():
+        for file_path in DOWNLOAD_PATH.glob("*.csv"):
+            if file_path.is_file():
+                files.append({
+                    "name": file_path.name,
+                    "size": get_file_size(file_path)
+                })
+    
+    return files
+
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """
+    Download a file from the downloads directory
+    """
+    file_path = DOWNLOAD_PATH / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type="text/csv"
+    )
 
 # Neo4j Connection Class
 
@@ -277,6 +325,20 @@ async def check_neo4j_connection():
             "status": "error",
             "message": f"Failed to connect to Neo4j database: {str(e)}"
         }
+
+def get_file_type(filename: str) -> str:
+    """Get file type from extension"""
+    ext = filename.split('.')[-1].lower()
+    type_map = {
+        'pdf': 'PDF',
+        'csv': 'CSV',
+        'xlsx': 'Excel',
+        'json': 'JSON',
+        'txt': 'Text',
+        'doc': 'Word',
+        'docx': 'Word'
+    }
+    return type_map.get(ext, ext.upper())
 
 # Run FastAPI (if needed locally)
 if __name__ == "__main__":

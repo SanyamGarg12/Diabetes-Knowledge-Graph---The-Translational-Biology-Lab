@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import News from "./pages/News";
@@ -9,26 +9,82 @@ import "./styles.css";
 import Footer from "./components/Footer";
 import Statistics from "./pages/Statistics";
 
+// Navigation component with active link highlighting
+const Navigation = () => {
+  const location = useLocation();
+  
+  return (
+    <nav className="navbar">
+      <div className="nav-container">
+        <ul className="nav-links">
+          <li>
+            <Link 
+              to="/" 
+              className={location.pathname === "/" ? "active" : ""}
+            >
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/search" 
+              className={location.pathname === "/search" ? "active" : ""}
+            >
+              Search
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/news" 
+              className={location.pathname === "/news" ? "active" : ""}
+            >
+              News
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/downloads" 
+              className={location.pathname === "/downloads" ? "active" : ""}
+            >
+              Downloads
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/statistics" 
+              className={location.pathname === "/statistics" ? "active" : ""}
+            >
+              Statistics
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/contact" 
+              className={location.pathname === "/contact" ? "active" : ""}
+            >
+              Contact
+            </Link>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  );
+};
+
 const App = () => {
   return (
     <Router>
       <div className="app-container">
         {/* Header with animated background */}
         <header className="header">
-          <h1 className="website-title">Diabetes Knowledge Graph</h1>
+          <div className="header-content">
+            <h1 className="website-title">Diabetes Knowledge Graph</h1>
+            <p className="website-subtitle">Exploring the Complex World of Diabetes Research</p>
+          </div>
         </header>
 
-        {/* Sticky Navigation Bar */}
-        <nav className="navbar">
-          <ul className="nav-links">
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/search">Search</Link></li>
-            <li><Link to="/news">News</Link></li>
-            <li><Link to="/downloads">Downloads</Link></li>
-            <li><Link to="/statistics">Statistics</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
-          </ul>
-        </nav>
+        {/* Navigation Bar */}
+        <Navigation />
 
         {/* Main Content Area */}
         <main className="content">
