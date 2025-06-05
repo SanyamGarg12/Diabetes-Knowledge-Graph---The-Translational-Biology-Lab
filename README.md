@@ -1,155 +1,164 @@
-# Diabetes Knowledge Graph
+# 🧬 Diabetes Knowledge Graph Explorer
 
-## Project Description
+<div align="center">
 
-This project is an interactive web application for exploring a knowledge graph related to Translational Biology, with a focus on Diabetes Type 2. It allows users to query the knowledge graph using natural language, visualize the relationships between biological entities such as genes, proteins, diseases, and drugs, and view relevant data in a structured table format.
+![Diabetes Knowledge Graph](https://img.shields.io/badge/Diabetes-Knowledge%20Graph-blue)
+![React](https://img.shields.io/badge/React-18.2.0-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.68.0-green)
+![Neo4j](https://img.shields.io/badge/Neo4j-4.4.0-purple)
+![Ollama](https://img.shields.io/badge/Ollama-gemma3:12b-orange)
 
-The application consists of a frontend built with React, a backend powered by FastAPI and Python, and utilizes a Neo4j graph database to store the knowledge graph. Natural language queries are processed by an Ollama-based language model to generate Cypher queries for the database.
+*A powerful web application for exploring the complex relationships between biological entities in Type 2 Diabetes research*
 
-## Tech Stack
+</div>
 
-*   **Frontend:**
-    *   React (with Vite)
-    *   JavaScript/JSX
-    *   Custom CSS (and potentially Tailwind CSS)
-    *   Sigma.js (for graph visualization)
-    *   Framer Motion (for animations)
-    *   Axios (for API calls)
-    *   React Router (for navigation)
+## 📋 Overview
 
-*   **Backend:**
-    *   FastAPI (Python)
-    *   Neo4j Python Driver
-    *   Ollama Python Library
-    *   Python
+The Diabetes Knowledge Graph Explorer is an innovative web application that enables researchers, scientists, and healthcare professionals to explore and analyze the intricate relationships between various biological entities involved in Type 2 Diabetes. By leveraging natural language processing and graph visualization, users can easily navigate through complex biological networks and discover valuable insights.
 
-*   **Database:**
-    *   Neo4j Graph Database
+### 🌟 Key Features
 
-*   **AI Model:**
-    *   Ollama (specifically using the `gemma3:12b` model for Cypher generation)
+- **Natural Language Queries**: Ask questions in plain English and get instant results
+- **Interactive Graph Visualization**: Explore relationships between genes, proteins, and diseases
+- **Comprehensive Data Display**: View detailed information in both graph and table formats
+- **Real-time Data Analysis**: Get instant insights from the knowledge graph
+- **User-friendly Interface**: Intuitive design for easy navigation and exploration
 
-## Data Sources
+## 🏗️ Architecture
 
-The knowledge graph is populated with data sourced from various high-quality biomedical databases, including:
+The application is built using a modern tech stack:
 
-*   OMIM (Online Mendelian Inheritance in Man)
-*   NCBI (National Center for Biotechnology Information)
-*   CTD (Comparative Toxicogenomics Database)
-*   TTD (Therapeutic Target Database)
-*   HUGO (HUGO Gene Nomenclature Committee)
-*   miRTarBase
-*   T2Diacod
-*   DisGeNET
-*   Rhea (Biochemical Reactions Database)
-*   KEGG (Kyoto Encyclopedia of Genes and Genomes)
-*   Gene Ontology
-*   AlphaFold Protein Structure Database
-*   UniProt (Universal Protein Resource)
-*   InterPro (Integrated Protein Family Database)
-*   PROSITE (Protein Families and Domains Database)
-*   DbKB (Disease Knowledge Base)
+### Frontend
+- **React 18** with Vite for fast development and optimal performance
+- **Tailwind CSS** for beautiful, responsive design
+- **Sigma.js** for interactive graph visualization
+- **Framer Motion** for smooth animations
+- **Axios** for efficient API communication
+- **React Router** for seamless navigation
 
-Information is also incorporated from research papers published between 2000 and 2025 on PubMed.
+### Backend
+- **FastAPI** for high-performance API endpoints
+- **Neo4j Python Driver** for graph database operations
+- **Ollama** integration for natural language processing
+- **Python 3.8+** for robust backend logic
 
-## Setup and Running the Project
+### Database
+- **Neo4j Graph Database** for storing and querying the knowledge graph
 
-To set up and run the project locally, follow these steps:
+## 📚 Data Sources
+
+Our knowledge graph integrates data from multiple authoritative biomedical databases:
+
+| Category | Databases |
+|----------|-----------|
+| **Genomic Data** | NCBI, HUGO, miRTarBase |
+| **Protein Data** | UniProt, AlphaFold, InterPro, PROSITE |
+| **Disease Data** | OMIM, DisGeNET, T2Diacod |
+| **Drug Data** | TTD, CTD |
+| **Pathway Data** | KEGG, Rhea |
+| **Ontology Data** | Gene Ontology |
+| **Literature** | PubMed (2000-2025) |
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-*   Python 3.8+
-*   Node.js (LTS version recommended)
-*   Neo4j Desktop or Server (with a database named `diabeteskbnew`)
-*   Ollama (with the `gemma3:12b` model pulled)
+- Python 3.8 or higher
+- Node.js (LTS version)
+- Neo4j Desktop/Server
+- Ollama with gemma3:12b model
+- Git
 
-### 1. Clone the Repository
+### Installation Steps
 
-```bash
-git clone <repository_url>
-cd <repository_name>
-```
+1. **Clone the Repository**
+   ```bash
+   git clone <repository_url>
+   cd diabetes-knowledge-graph
+   ```
 
-### 2. Set up the Backend
+2. **Backend Setup**
+   ```bash
+   cd backend
+   python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   # Linux/MacOS
+   source venv/bin/activate
+   
+   pip install -r requirements.txt
+   ```
 
-Navigate to the `backend` directory:
+3. **Configure Backend**
+   - Update Neo4j connection details in `backend/main.py`:
+     ```python
+     NEO4J_URI = "bolt://localhost:7687"
+     NEO4J_USER = "neo4j"
+     NEO4J_PASSWORD = "your_password"
+     DB_NAME = "diabeteskbnew"
+     ```
+   - Ensure Ollama service is running and accessible
 
-```bash
-cd backend
-```
+4. **Frontend Setup**
+   ```bash
+   cd ../frontend
+   npm install
+   ```
 
-Create a virtual environment and activate it:
+5. **Start the Application**
+   ```bash
+   # Terminal 1 - Backend
+   cd backend
+   uvicorn main:app --reload
+   
+   # Terminal 2 - Frontend
+   cd frontend
+   npm run dev
+   ```
 
-```bash
-python -m venv venv
-# On Windows
-venv\Scripts\activate
-# On macOS/Linux
-source venv/bin/activate
-```
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
 
-Install the backend dependencies:
+## 💡 Usage Guide
 
-```bash
-pip install -r requirements.txt
-```
+1. **Natural Language Queries**
+   - Type your question in the search bar
+   - Example: "Show me genes associated with insulin resistance"
 
-*Note: You may need to create a `requirements.txt` file if it doesn't exist, listing the required Python packages (fastapi, uvicorn, python-dotenv, neo4j, ollama, requests, etc.).*
+2. **Graph Visualization**
+   - Click on nodes to view detailed information
+   - Drag nodes to rearrange the graph
+   - Zoom in/out to explore relationships
 
-Update the Neo4j connection details in `backend/main.py` if your database credentials or URI are different.
+3. **Data Analysis**
+   - View tabular data for detailed analysis
+   - Export results in CSV format
+   - Explore node properties and relationships
 
-Ensure your Ollama service is running and accessible from the backend, and verify the `ollama_client` host in `backend/main.py`.
+## 🤝 Contributing
 
-Run the FastAPI backend server:
+We welcome contributions! Please follow these steps:
 
-```bash
-uvicorn main:app --reload
-```
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-The backend should now be running at `http://127.0.0.1:8000`.
+## 📄 License
 
-### 3. Set up the Frontend
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Navigate to the `frontend` directory:
+## 🙏 Acknowledgements
 
-```bash
-cd ../frontend
-```
+- All data providers and databases
+- Open-source community
+- Contributors and maintainers
 
-Install the frontend dependencies:
+---
 
-```bash
-npm install
-# or
-yarn install
-```
-
-Run the React development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-The frontend should now be running, typically at `http://localhost:5173`.
-
-## Features
-
-*   Natural Language to Cypher Query Conversion
-*   Interactive Knowledge Graph Visualization
-*   Tabular display of query results
-*   Detailed node property display on click
-*   Responsive UI
-
-## Contributing
-
-(Optional section on how to contribute)
-
-## License
-
-(Optional section on project license)
-
-## Acknowledgements
-
-(Optional section for thanking contributors or data sources) 
+<div align="center">
+Made with ❤️ for advancing diabetes research
+</div> 
