@@ -62,6 +62,10 @@ const Contact = () => {
                 <strong>Vivek Anand</strong><br />
                 <strong>Email:</strong> <a href="mailto:vivek21503@iiitd.ac.in">vivek21503@iiitd.ac.in</a>
               </div>
+              <div className="member-item">
+                <strong>Sanyam Garg (Developer and Designer)</strong><br />
+                <strong>Email:</strong> <a href="mailto:sanyam22448@iiitd.ac.in">sanyam22448@iiitd.ac.in</a>
+              </div>
             </div>
           </div>
         </div>
