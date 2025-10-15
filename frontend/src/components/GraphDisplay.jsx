@@ -60,12 +60,16 @@ const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
     });
 
     // Apply force-directed layout with improved settings
+    // If graph is very large, reduce iterations and scale for readability
+    const nodeCount = graph.order;
+    const iterations = nodeCount > 800 ? 80 : nodeCount > 400 ? 140 : 200;
+    const scalingRatio = nodeCount > 800 ? 4 : nodeCount > 400 ? 3 : 2;
     forceAtlas2.assign(graph, {
-      iterations: 200,
+      iterations,
       settings: {
         gravity: 0.5,
-        scalingRatio: 2,
-        slowDown: 1.5,
+        scalingRatio,
+        slowDown: 2,
         barnesHutOptimize: true,
       },
     });
@@ -74,11 +78,11 @@ const GraphDisplay = ({ visualizationData, setSelectedNode }) => {
     const sigma = new Sigma(graph, containerRef.current, {
       minCameraRatio: 0.1,
       maxCameraRatio: 10,
-      labelRenderedSizeThreshold: 6,
+      labelRenderedSizeThreshold: 8,
       labelSize: 12,
       labelWeight: "bold",
       labelColor: { color: "#2C3E50" },
-      renderEdgeLabels: true,
+      renderEdgeLabels: false,
       defaultNodeColor: "#3498DB",
       defaultEdgeColor: "#95A5A6",
     });

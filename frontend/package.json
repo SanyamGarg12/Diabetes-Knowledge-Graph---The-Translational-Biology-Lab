@@ -27,7 +27,8 @@
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^7.2.0",
     "sigma": "^3.0.1",
-    "vis-network": "^9.1.9"
+    "vis-network": "^9.1.9",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

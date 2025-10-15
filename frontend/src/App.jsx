@@ -75,8 +75,13 @@ const App = () => {
   return (
     <Router>
       <div className="app-container">
-        {/* Header with animated background */}
+        {/* Header with animated background and IIITD logo */}
         <header className="header">
+          <div className="header-brand">
+            <img src="/IIITD.png" alt="IIITD" className="header-logo" />
+            {/* <span className="brand-vrule" /> */}
+           
+          </div>
           <div className="header-content">
             <h1 className="website-title">Diabetes Knowledge Graph</h1>
             <p className="website-subtitle">Exploring the Complex World of Diabetes Research</p>
@@ -101,7 +106,7 @@ const App = () => {
         {/* Footer */}
         <footer className="footer">
           <div className="footer-content">
-            <p>© 2024 Diabetes Knowledge Graph. All rights reserved.</p>
+            <p>© 2025 Diabetes Knowledge Graph. All rights reserved.</p>
           </div>
         </footer>
       </div>

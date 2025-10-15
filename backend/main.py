@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Path as PathParam
 from fastapi.responses import FileResponse
 from neo4j import GraphDatabase
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,11 +27,51 @@ ollama_client = Client(host='http://192.168.22.52:11434')
 # Neo4j Connection Settings
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "123456789"
-DB_NAME = "diabeteskbnew"
+NEO4J_PASSWORD = "12345678"
+DB_NAME = "neo4j"
 
 # File paths
 DOWNLOAD_PATH = Path("downloads")
+
+# --- Config aligned with only_search_tab/server/src/config.ts ---
+LABELS = [
+    'Gene_Symbol', 'Protein_Family', 'Disease', 'Protein', 'Enzyme', 'Drug_name',
+    'Chemical_Name', 'lncRNA', 'Kegg', 'Reaction',
+    'GO_Biological_Process_ID', 'GO_Cellular_Component_ID', 'GO_Molecular_Function_ID', 'miRNA'
+]
+
+PROPS_BY_LABEL: Dict[str, List[str]] = {
+    'Gene_Symbol': ['hgnc','entrez_id','ensembl_id','alias','is_transcriptional_factor','name'],
+    'Protein_Family': ['name'],
+    'Disease': ['MeSH_ID','omim_id','name'],
+    'Protein': ['AlphaFoldDB','Entry','Enzyme','InterPro','Length','PROSITE','Pfam','ProteinNames','name'],
+    'Drug_name': ['Clinical_status','name'],
+    'Chemical_Name': ['chemical_id','interaction','interaction_action','name'],
+    'lncRNA': ['ChromosomalLocation','causal_description','Pubmed_ids','name'],
+    'Kegg': ['pathway_name','name'],
+    'Reaction': ['Rhea_ID','name'],
+    'GO_Biological_Process_ID': ['GO_Biological_Process_TERM','name'],
+    'GO_Cellular_Component_ID': ['GO_Cellular_Component_TERM','name'],
+    'GO_Molecular_Function_ID': ['GO_Molecular_Function_TERM','name'],
+    'miRNA': ['name']
+}
+
+LIMITS = {
+    'SEARCH_TOP': 50,
+    'FTS_CANDIDATES': 150,
+    'PREFIX_CANDIDATES': 50,
+    'FIELD_CANDIDATES': 120,
+}
+
+# Basic ID pattern routing similar to only_search_tab
+ID_PATTERNS: List[Dict[str, Any]] = [
+    { 'key': 'hgnc', 're': re.compile(r'^hgnc:\s*\d+$', re.I), 'labels': ['Gene_Symbol'], 'prop': 'hgnc' },
+    { 'key': 'entrez', 're': re.compile(r'^entrez:\s*\d+$', re.I), 'labels': ['Gene_Symbol'], 'prop': 'entrez_id' },
+    { 'key': 'ensembl', 're': re.compile(r'^ensembl:\s*ensg\d+', re.I), 'labels': ['Gene_Symbol'], 'prop': 'ensembl_id' },
+    { 'key': 'omim', 're': re.compile(r'^omim:\s*\d+$', re.I), 'labels': ['Disease'], 'prop': 'omim_id' },
+    { 'key': 'mesh', 're': re.compile(r'^mesh:\s*[a-z]?\d+$', re.I), 'labels': ['Disease'], 'prop': 'MeSH_ID' },
+    { 'key': 'rhea', 're': re.compile(r'^rhea:\s*\d+$', re.I), 'labels': ['Reaction'], 'prop': 'Rhea_ID' },
+]
 
 def get_file_size(file_path: Path) -> str:
     """Convert file size to human readable format"""
@@ -344,3 +384,232 @@ def get_file_type(filename: str) -> str:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+# --- New endpoints to support only_search_tab client ---
+
+def _to_number(v):
+    try:
+        return v.to_number() if hasattr(v, "to_number") else int(v)
+    except Exception:
+        return v
+
+def _quote(value: Any) -> str:
+    s = str(value)
+    s = s.replace("\\", "\\\\").replace("'", "\\'")
+    return f"'{s}'"
+
+@app.get("/v1/search")
+def v1_search(q: str = Query(...), label: str | None = Query(None), field: str | None = Query(None), limit: int = Query(20, ge=1, le=100)):
+    labels = [label] if label else None
+
+    results: List[Dict[str, Any]] = []
+
+    # 0) ID pattern routing (exact matches by known identifier shapes)
+    q_trim = q.strip()
+    for pat in ID_PATTERNS:
+        if pat['re'].match(q_trim):
+            for lab in pat['labels']:
+                cy = (
+                    f"MATCH (n:{lab}) WHERE toLower(toString(n.{pat['prop']})) = toLower($v) "
+                    "RETURN id(n) AS id, labels(n) AS labels, properties(n) AS props LIMIT 20"
+                )
+                rows = neo4j_conn.execute_query(cy.replace("$v", _quote(q_trim)))
+                for r in rows:
+                    results.append({
+                        "id": _to_number(r.get("id")),
+                        "labels": r.get("labels", []),
+                        "props": r.get("props", {}),
+                    })
+            if results:
+                return {"results": results[:limit]}
+
+    # 1) Full-text index if available
+    try:
+        cypher = (
+            "CALL db.index.fulltext.queryNodes('node_search', $q) YIELD node, score "
+            "WHERE $labels IS NULL OR any(l IN labels(node) WHERE l IN $labels) "
+            "RETURN id(node) AS id, labels(node) AS labels, properties(node) AS props, score "
+            "ORDER BY score DESC LIMIT toInteger($lim)"
+        )
+        rows = neo4j_conn.execute_query(cypher.replace("$q", _quote(q)).replace("$labels", "null" if labels is None else str(labels)).replace("$lim", str(limit)))
+        for r in rows:
+            id_val = r.get("id")
+            results.append({
+                "id": _to_number(id_val) if id_val is not None else None,
+                "labels": r.get("labels", []),
+                "props": r.get("props", {}),
+            })
+    except Exception:
+        pass
+
+    # 2) Field contains (if allowed)
+    if label and field and (PROPS_BY_LABEL.get(label) and field in PROPS_BY_LABEL[label]):
+        cy_field = (
+            f"MATCH (n:{label}) "
+            f"WHERE toLower(toString(coalesce(n.{field}, ''))) CONTAINS toLower($q) "
+            "RETURN id(n) AS id, labels(n) AS labels, properties(n) AS props "
+            "LIMIT toInteger($lim)"
+        )
+        rows = neo4j_conn.execute_query(cy_field.replace("$q", _quote(q)).replace("$lim", str(limit)))
+        for r in rows:
+            results.append({
+                "id": _to_number(r.get("id")),
+                "labels": r.get("labels", []),
+                "props": r.get("props", {}),
+            })
+
+    # 3) Name prefix helper
+    if not results:
+        cypher = (
+            "MATCH (n) "
+            "WHERE n.name IS NOT NULL AND toLower(n.name) STARTS WITH toLower($q) "
+            "RETURN id(n) AS id, labels(n) AS labels, properties(n) AS props "
+            "LIMIT toInteger($lim)"
+        )
+        rows = neo4j_conn.execute_query(cypher.replace("$q", _quote(q)).replace("$lim", str(limit)))
+        for r in rows:
+            results.append({
+                "id": _to_number(r.get("id")),
+                "labels": r.get("labels", []),
+                "props": r.get("props", {}),
+            })
+
+    return {"results": results}
+
+
+@app.get("/v1/nodes/{node_id}/facets")
+def v1_facets(node_id: int = PathParam(...)):
+    cypher = (
+        "MATCH (seed) WHERE id(seed) = $id "
+        "MATCH (seed)-[r]-(m) "
+        "RETURN labels(m)[0] AS neighborLabel, type(r) AS relType, count(*) AS cnt "
+        "ORDER BY cnt DESC LIMIT 500"
+    )
+    rows = neo4j_conn.execute_query(cypher.replace("$id", str(node_id)))
+    data = [{"neighborLabel": r.get("neighborLabel"), "relType": r.get("relType"), "cnt": int(r.get("cnt", 0))} for r in rows]
+    return {"rows": data}
+
+
+@app.get("/v1/nodes/{node_id}/neighbors")
+def v1_neighbors(node_id: int = PathParam(...), relTypes: str | None = Query(None), neighborLabels: str | None = Query(None), names: str | None = Query(None), minConfidence: float | None = Query(None), limit: int = Query(300, ge=1, le=1000), exclude: str | None = Query(None)):
+    rels = [s.strip() for s in relTypes.split(",")] if relTypes else None
+    labs = [s.strip() for s in neighborLabels.split(",")] if neighborLabels else None
+    namesLc = [s.strip().lower() for s in names.split(",")] if names else []
+    excludeIds = [int(x) for x in exclude.split(",") if x.strip().isdigit()] if exclude else []
+
+    where_parts = ["id(seed) = $id"]
+    if rels:
+        where_parts.append("type(r) IN $rels")
+    if labs:
+        where_parts.append("any(l IN labels(m) WHERE l IN $labs)")
+    if minConfidence is not None:
+        where_parts.append("coalesce(r.confidence,0.0) >= $minConf")
+    if namesLc:
+        where_parts.append("toLower(coalesce(m.name,'')) IN $names")
+    if excludeIds:
+        where_parts.append("NOT id(m) IN $excludeIds")
+
+    where_clause = " AND ".join(["(" + w + ")" for w in where_parts])
+    cypher = (
+        "MATCH (seed),(seed)-[r]-(m) WHERE " + where_clause + " "
+        "RETURN id(seed) AS src, type(r) AS rel, id(m) AS dst, labels(m) AS dstLabels, properties(m) AS dstProps, properties(r) AS relProps "
+        "LIMIT toInteger($lim)"
+    )
+    params = {
+        "id": node_id,
+        "rels": rels,
+        "labs": labs,
+        "minConf": minConfidence,
+        "names": namesLc,
+        "excludeIds": excludeIds,
+        "lim": limit,
+    }
+    # naive templating for our simple executor
+    q = cypher
+    for k, v in list(params.items()):
+        if v is None:
+            q = q.replace(f"${k}", "null")
+        elif isinstance(v, str):
+            q = q.replace(f"${k}", f'"{v}"')
+        else:
+            q = q.replace(f"${k}", str(v))
+
+    rows = neo4j_conn.execute_query(q)
+    nodes: Dict[int, Any] = {}
+    edges = []
+
+    # seed metadata
+    seed_meta_rows = neo4j_conn.execute_query(f"MATCH (s) WHERE id(s) = {node_id} RETURN labels(s) AS labels, properties(s) AS props")
+    seed_labels = seed_meta_rows[0].get("labels") if seed_meta_rows else ["Node"]
+    seed_props = seed_meta_rows[0].get("props") if seed_meta_rows else {}
+    nodes[node_id] = {"id": node_id, "uid": node_id, "label": (seed_labels[0] if seed_labels else "Node"), "labels": seed_labels, "name": seed_props.get("name") if isinstance(seed_props, dict) else None, "props": seed_props}
+
+    for r in rows:
+        dst = _to_number(r.get("dst"))
+        dst_labels = r.get("dstLabels") or []
+        dst_props = r.get("dstProps") or {}
+        rel_type = r.get("rel")
+        rel_props = r.get("relProps") or {}
+        if dst not in nodes:
+            primary = dst_labels[0] if dst_labels else "Node"
+            nodes[dst] = {"id": dst, "uid": dst, "label": primary, "labels": dst_labels, "name": (dst_props.get("name") if isinstance(dst_props, dict) else None), "props": dst_props}
+        edges.append({"src": node_id, "dst": dst, "type": rel_type, "props": rel_props})
+
+    return {"nodes": list(nodes.values()), "edges": edges}
+
+
+@app.get("/v1/schema/properties")
+def v1_schema_properties(label: str = Query(...)):
+    total_rows = neo4j_conn.execute_query(f"MATCH (n:{label}) RETURN count(n) AS c")
+    total = int(total_rows[0].get("c")) if total_rows else 0
+    rows = neo4j_conn.execute_query(
+        f"MATCH (n:{label}) UNWIND keys(n) AS prop RETURN prop, count(*) AS cnt ORDER BY cnt DESC LIMIT 200"
+    )
+    all_props = [{"prop": r.get("prop"), "cnt": int(r.get("cnt", 0))} for r in rows]
+    allowed = PROPS_BY_LABEL.get(label)
+    if allowed:
+        all_props = [p for p in all_props if p["prop"] in allowed]
+        # ensure 'name' is present at least once
+        if 'name' not in [p['prop'] for p in all_props]:
+            all_props = [{"prop": "name", "cnt": total}] + all_props
+    properties = [{"prop": p["prop"], "cnt": p["cnt"], "coverage": (p["cnt"] / total if total else 0)} for p in all_props]
+    return {"label": label, "total": total, "properties": properties}
+
+
+# --- Diagnostics to align with a new dump ---
+@app.get("/v1/schema/labels")
+def v1_schema_labels():
+    rows = neo4j_conn.execute_query("""
+      MATCH (n)
+      WITH labels(n) AS labs
+      UNWIND labs AS lab
+      RETURN lab AS label, count(*) AS cnt
+      ORDER BY cnt DESC
+    """)
+    return {"labels": [{"label": r.get("label"), "count": int(r.get("cnt", 0))} for r in rows]}
+
+
+@app.get("/v1/schema/summary")
+def v1_schema_summary(top:int = Query(25, ge=1, le=200)):
+    labels_rows = neo4j_conn.execute_query("""
+      MATCH (n)
+      WITH labels(n) AS labs
+      UNWIND labs AS lab
+      RETURN lab AS label, count(*) AS cnt
+      ORDER BY cnt DESC
+    """)
+    out: Dict[str, Any] = {"labels": [{"label": r.get("label"), "count": int(r.get("cnt", 0))} for r in labels_rows], "properties": []}
+    for item in out["labels"]:
+        lab = item["label"]
+        props_rows = neo4j_conn.execute_query(f"""
+          MATCH (n:`{lab}`)
+          UNWIND keys(n) AS prop
+          RETURN prop, count(*) AS cnt
+          ORDER BY cnt DESC LIMIT {top}
+        """)
+        out["properties"].append({
+            "label": lab,
+            "total": item["count"],
+            "props": [{"prop": r.get("prop"), "cnt": int(r.get("cnt", 0))} for r in props_rows]
+        })
+    return out
