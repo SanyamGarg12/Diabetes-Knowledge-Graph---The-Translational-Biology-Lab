@@ -8,6 +8,69 @@ const News = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper function to format authors from PubMed API response
+  const formatAuthors = (authors) => {
+    if (!authors) return "Unknown authors";
+    
+    try {
+      let authorList = [];
+      
+      // PubMed API typically returns authors as an array of objects or strings
+      if (Array.isArray(authors)) {
+        authorList = authors.map(author => {
+          if (typeof author === 'string') {
+            return author.trim();
+          } else if (typeof author === 'object' && author !== null) {
+            // Handle author object with name, lastname, forename, etc.
+            if (author.name) {
+              return author.name.trim();
+            } else if (author.lastname && author.forename) {
+              return `${author.forename} ${author.lastname}`.trim();
+            } else if (author.lastname) {
+              return author.lastname.trim();
+            } else {
+              // Try to extract any string value from the object
+              const nameValues = Object.values(author).filter(val => 
+                typeof val === 'string' && val.trim().length > 0 && val.length < 100
+              );
+              return nameValues.length > 0 ? nameValues[0].trim() : null;
+            }
+          }
+          return null;
+        }).filter(name => name !== null);
+      } else if (typeof authors === 'string') {
+        // Handle string format (comma or semicolon separated)
+        authorList = authors.split(/[,;]/).map(author => author.trim());
+      } else if (typeof authors === 'object' && authors !== null) {
+        // Handle single author object
+        if (authors.name) {
+          authorList = [authors.name.trim()];
+        } else if (authors.lastname && authors.forename) {
+          authorList = [`${authors.forename} ${authors.lastname}`.trim()];
+        } else if (authors.lastname) {
+          authorList = [authors.lastname.trim()];
+        }
+      }
+      
+      // Clean up and limit the author names
+      authorList = authorList
+        .filter(name => name && typeof name === 'string' && name.trim().length > 0)
+        .map(name => name.trim())
+        .slice(0, 2); // Show only first 2 authors
+      
+      if (authorList.length === 0) {
+        return "Unknown authors";
+      }
+      
+      const formattedAuthors = authorList.join(", ");
+      return formattedAuthors;
+      
+    } catch (error) {
+      console.error("Error formatting authors:", error, "Authors data:", authors);
+      return "Unknown authors";
+    }
+  };
+
   // Fetch PubMed Articles
   useEffect(() => {
     const fetchPubMed = async () => {
@@ -29,6 +92,13 @@ const News = () => {
         const articles = Object.values(detailsResponse.data.result).filter(
           (article) => article.uid
         );
+        
+        // Debug: Log the structure of first article to understand data format
+        if (articles.length > 0) {
+          console.log("Sample article structure:", articles[0]);
+          console.log("Authors structure:", articles[0].authors);
+        }
+        
         setPubmedArticles(articles);
       } catch (err) {
         console.error("Error fetching PubMed articles:", err);
@@ -133,8 +203,7 @@ const News = () => {
                       {article.authors && (
                         <span className="news-card-authors">
                           <i className="news-card-icon">👥</i>
-                          {article.authors.slice(0, 2).join(", ")}
-                          {article.authors.length > 2 ? " et al." : ""}
+                          {formatAuthors(article.authors)}
                         </span>
                       )}
                     </div>
