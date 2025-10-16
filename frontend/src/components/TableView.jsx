@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useApp } from "../store";
+import JSZip from "jszip";
 
 export default function TableView() {
 	const { nodes, edges } = useApp();
@@ -18,71 +19,202 @@ export default function TableView() {
 	}, [nodeRows]);
 
 
-	function downloadNodesCsv() {
-		const rows = [...nodes.values()].map((n) => {
-			const props = n.props || {};
-			return {
-				id: n.id,
-				name: n.name || props.name || "",
-				labels: Array.isArray(n.labels) ? n.labels.join("|") : (n.label || ""),
-				// Extract common useful properties
-				entrez_id: props.entrez_id || "",
-				hgnc: props.hgnc || "",
-				alias: props.alias || "",
-				chromosomal_location: props.Chromosomal_Location || props.chromosomal_location || "",
-				interaction_actions: props.interaction_actions || "",
-				// Add other useful props as separate columns
-				uniprot_id: props.uniprot_id || props.UniProt || "",
-				pubmed_id: props.pubmed_id || props.PubMed || "",
-				mesh_id: props.mesh_id || props.MeSH || "",
-				omim_id: props.omim_id || props.OMIM || "",
-				// Keep a cleaned version of other props for reference
-				other_props: Object.keys(props)
-					.filter(key => !['name', 'entrez_id', 'hgnc', 'alias', 'Chromosomal_Location', 'chromosomal_location', 
-						'interaction_actions', 'uniprot_id', 'UniProt', 'pubmed_id', 'PubMed', 'mesh_id', 'MeSH', 'omim_id', 'OMIM'].includes(key))
-					.map(key => `${key}: ${props[key]}`)
-					.join("; ")
-			};
+	async function downloadNodesCsv() {
+		const zip = new JSZip();
+		const allNodes = [...nodes.values()];
+		
+		// Group nodes by their primary label
+		const nodesByLabel = {};
+		
+		allNodes.forEach((n) => {
+			const label = Array.isArray(n.labels) && n.labels[0] ? n.labels[0] : (n.label || "Unknown");
+			if (!nodesByLabel[label]) {
+				nodesByLabel[label] = [];
+			}
+			nodesByLabel[label].push(n);
 		});
-		downloadCsv(rows, "nodes.csv");
+
+		// Create CSV for each label category
+		for (const [label, labelNodes] of Object.entries(nodesByLabel)) {
+			const rows = labelNodes.map((n) => {
+				const props = n.props || {};
+				return {
+			id: n.id,
+					name: n.name || props.name || "",
+			labels: Array.isArray(n.labels) ? n.labels.join("|") : (n.label || ""),
+					// Extract common useful properties
+					entrez_id: props.entrez_id || "",
+					hgnc: props.hgnc || "",
+					alias: props.alias || "",
+					chromosomal_location: props.Chromosomal_Location || props.chromosomal_location || "",
+					interaction_actions: props.interaction_actions || "",
+					// Add other useful props as separate columns
+					uniprot_id: props.uniprot_id || props.UniProt || "",
+					pubmed_id: props.pubmed_id || props.PubMed || "",
+					mesh_id: props.mesh_id || props.MeSH || "",
+					omim_id: props.omim_id || props.OMIM || "",
+					// Keep a cleaned version of other props for reference
+					other_props: Object.keys(props)
+						.filter(key => !['name', 'entrez_id', 'hgnc', 'alias', 'Chromosomal_Location', 'chromosomal_location', 
+							'interaction_actions', 'uniprot_id', 'UniProt', 'pubmed_id', 'PubMed', 'mesh_id', 'MeSH', 'omim_id', 'OMIM'].includes(key))
+						.map(key => `${key}: ${props[key]}`)
+						.join("; ")
+				};
+			});
+			
+			// Generate CSV content for this label
+			const csvContent = generateCsvContent(rows);
+			const fileName = `${label.replace(/[^a-zA-Z0-9]/g, '_')}_nodes.csv`;
+			zip.file(fileName, csvContent);
+		}
+
+		// Add a summary file
+		const summaryData = Object.entries(nodesByLabel).map(([label, labelNodes]) => ({
+			label,
+			count: labelNodes.length,
+			description: getLabelDescription(label)
+		}));
+		const summaryCsv = generateCsvContent(summaryData);
+		zip.file("summary.csv", summaryCsv);
+
+		// Generate and download ZIP file
+		try {
+			const zipBlob = await zip.generateAsync({ type: "blob" });
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(zipBlob);
+			link.setAttribute("download", "nodes_by_label.zip");
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		} catch (error) {
+			console.error("Error creating ZIP file:", error);
+			// Fallback to single CSV
+			const fallbackRows = allNodes.map((n) => {
+				const props = n.props || {};
+				return {
+					id: n.id,
+					name: n.name || props.name || "",
+					labels: Array.isArray(n.labels) ? n.labels.join("|") : (n.label || ""),
+					entrez_id: props.entrez_id || "",
+					hgnc: props.hgnc || "",
+					alias: props.alias || "",
+					chromosomal_location: props.Chromosomal_Location || props.chromosomal_location || "",
+					interaction_actions: props.interaction_actions || "",
+					uniprot_id: props.uniprot_id || props.UniProt || "",
+					pubmed_id: props.pubmed_id || props.PubMed || "",
+					mesh_id: props.mesh_id || props.MeSH || "",
+					omim_id: props.omim_id || props.OMIM || "",
+					other_props: Object.keys(props)
+						.filter(key => !['name', 'entrez_id', 'hgnc', 'alias', 'Chromosomal_Location', 'chromosomal_location', 
+							'interaction_actions', 'uniprot_id', 'UniProt', 'pubmed_id', 'PubMed', 'mesh_id', 'MeSH', 'omim_id', 'OMIM'].includes(key))
+						.map(key => `${key}: ${props[key]}`)
+						.join("; ")
+				};
+			});
+			downloadCsv(fallbackRows, "nodes.csv");
+		}
 	}
 
-	function downloadEdgesCsv() {
+	async function downloadEdgesCsv() {
+		const zip = new JSZip();
 		const nameById = new Map();
 		for (const n of [...nodes.values()]) {
 			const name = n.name || (n.props && n.props.name) || String(n.id);
 			nameById.set(String(n.id), name);
 		}
 
-		const rows = edges.map((e) => {
-			const props = e.props || {};
-			return {
-				source_id: e.src,
-				target_id: e.dst,
-				source_name: nameById.get(String(e.src)) || e.src,
-				target_name: nameById.get(String(e.dst)) || e.dst,
-				relationship_type: e.type,
-				interaction_actions: Array.isArray(props.interaction_actions) 
-					? props.interaction_actions.join(" | ") 
-					: (props.interaction_actions || ""),
-				evidence: props.evidence || "",
-				confidence: props.confidence || "",
-				// Add more common edge properties
-				direction: props.direction || "",
-				weight: props.weight || "",
-				publication: props.publication || props.pubmed || "",
-				// Keep a cleaned version of other props
-				other_props: Object.keys(props)
-					.filter(key => !['interaction_actions', 'evidence', 'confidence', 'direction', 'weight', 'publication', 'pubmed'].includes(key))
-					.map(key => `${key}: ${props[key]}`)
-					.join("; ")
-			};
+		// Group edges by relationship type
+		const edgesByType = {};
+		
+		edges.forEach((e) => {
+			const relType = e.type || "Unknown";
+			if (!edgesByType[relType]) {
+				edgesByType[relType] = [];
+			}
+			edgesByType[relType].push(e);
 		});
-		downloadCsv(rows, "edges.csv");
+
+		// Create CSV for each relationship type
+		for (const [relType, typeEdges] of Object.entries(edgesByType)) {
+			const rows = typeEdges.map((e) => {
+				const props = e.props || {};
+				return {
+					source_id: e.src,
+					target_id: e.dst,
+					source_name: nameById.get(String(e.src)) || e.src,
+					target_name: nameById.get(String(e.dst)) || e.dst,
+					relationship_type: e.type,
+					interaction_actions: Array.isArray(props.interaction_actions) 
+						? props.interaction_actions.join(" | ") 
+						: (props.interaction_actions || ""),
+					evidence: props.evidence || "",
+					confidence: props.confidence || "",
+					direction: props.direction || "",
+					weight: props.weight || "",
+					publication: props.publication || props.pubmed || "",
+					other_props: Object.keys(props)
+						.filter(key => !['interaction_actions', 'evidence', 'confidence', 'direction', 'weight', 'publication', 'pubmed'].includes(key))
+						.map(key => `${key}: ${props[key]}`)
+						.join("; ")
+				};
+			});
+			
+			// Generate CSV content for this relationship type
+			const csvContent = generateCsvContent(rows);
+			const fileName = `${relType.replace(/[^a-zA-Z0-9]/g, '_')}_edges.csv`;
+			zip.file(fileName, csvContent);
+		}
+
+		// Add a summary file
+		const summaryData = Object.entries(edgesByType).map(([relType, typeEdges]) => ({
+			relationship_type: relType,
+			count: typeEdges.length,
+			description: getRelationshipDescription(relType)
+		}));
+		const summaryCsv = generateCsvContent(summaryData);
+		zip.file("edges_summary.csv", summaryCsv);
+
+		// Generate and download ZIP file
+		try {
+			const zipBlob = await zip.generateAsync({ type: "blob" });
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(zipBlob);
+			link.setAttribute("download", "edges_by_type.zip");
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		} catch (error) {
+			console.error("Error creating ZIP file:", error);
+			// Fallback to single CSV
+			const fallbackRows = edges.map((e) => {
+				const props = e.props || {};
+				return {
+					source_id: e.src,
+					target_id: e.dst,
+					source_name: nameById.get(String(e.src)) || e.src,
+					target_name: nameById.get(String(e.dst)) || e.dst,
+					relationship_type: e.type,
+					interaction_actions: Array.isArray(props.interaction_actions) 
+						? props.interaction_actions.join(" | ") 
+						: (props.interaction_actions || ""),
+					evidence: props.evidence || "",
+					confidence: props.confidence || "",
+					direction: props.direction || "",
+					weight: props.weight || "",
+					publication: props.publication || props.pubmed || "",
+					other_props: Object.keys(props)
+						.filter(key => !['interaction_actions', 'evidence', 'confidence', 'direction', 'weight', 'publication', 'pubmed'].includes(key))
+						.map(key => `${key}: ${props[key]}`)
+						.join("; ")
+				};
+			});
+			downloadCsv(fallbackRows, "edges.csv");
+		}
 	}
 
-	function downloadCsv(rows, filename) {
-		if (!rows || rows.length === 0) return;
+	// Helper function to generate CSV content
+	function generateCsvContent(rows) {
+		if (!rows || rows.length === 0) return "";
 		const headers = Object.keys(rows[0]);
 		
 		// Helper function to properly escape CSV values
@@ -103,7 +235,86 @@ export default function TableView() {
 		
 		// Add BOM for proper UTF-8 encoding in Excel
 		const bom = "\uFEFF";
-		const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+		return bom + csv;
+	}
+
+	// Helper function to get label descriptions
+	function getLabelDescription(label) {
+		const descriptions = {
+			'Gene_Symbol': 'Human gene symbols and identifiers',
+			'Gene': 'Genetic entities and gene information',
+			'Protein': 'Protein molecules and their properties',
+			'Protein_Coding': 'Protein-coding genes and their products',
+			'Disease': 'Human diseases and medical conditions',
+			'Disorder': 'Genetic and medical disorders',
+			'Syndrome': 'Clinical syndromes and disease patterns',
+			'Condition': 'Medical conditions and health states',
+			'Chemical_Name': 'Chemical compounds and molecules',
+			'Drug': 'Pharmaceutical drugs and medications',
+			'Compound': 'Chemical compounds and substances',
+			'Chemical': 'Chemical entities and compounds',
+			'miRNA': 'MicroRNA molecules and regulators',
+			'microRNA': 'MicroRNA molecules and regulators',
+			'lncRNA': 'Long non-coding RNA molecules',
+			'ncRNA': 'Non-coding RNA molecules',
+			'RNA': 'RNA molecules and transcripts',
+			'Transcription_Factor': 'Transcription factor proteins',
+			'TF': 'Transcription factor proteins',
+			'TF_Gene': 'Transcription factor genes',
+			'Pathway': 'Biological pathways and processes',
+			'Process': 'Biological processes and functions',
+			'Function': 'Molecular functions and activities',
+			'Cell_Type': 'Cell types and cellular entities',
+			'Tissue': 'Tissues and anatomical structures',
+			'Organ': 'Organs and organ systems',
+			'Mutation': 'Genetic mutations and variants',
+			'Variant': 'Genetic variants and polymorphisms',
+			'SNP': 'Single nucleotide polymorphisms',
+			'Interaction': 'Molecular interactions and relationships',
+			'Relationship': 'Biological relationships and associations',
+			'Association': 'Biological associations and connections',
+			'Enzyme': 'Enzymatic proteins and catalysts',
+			'Catalyst': 'Catalytic molecules and enzymes',
+			'Receptor': 'Receptor proteins and binding sites',
+			'Channel': 'Ion channels and transport proteins',
+			'Hormone': 'Hormonal molecules and signaling',
+			'Signaling': 'Signaling molecules and pathways',
+			'Metabolite': 'Metabolic compounds and products',
+			'Biomarker': 'Biomarker molecules and indicators'
+		};
+		
+		return descriptions[label] || `Biological entities of type: ${label}`;
+	}
+
+	// Helper function to get relationship descriptions
+	function getRelationshipDescription(relType) {
+		const descriptions = {
+			'INTERACTS_WITH': 'Physical or functional interactions between molecules',
+			'ENCODES_PROTEIN': 'Gene encoding protein relationships',
+			'INFLUENCED_BY': 'Regulatory relationships and influences',
+			'ASSOCIATED_WITH': 'Statistical or functional associations',
+			'REGULATES': 'Regulatory control relationships',
+			'BINDS_TO': 'Physical binding interactions',
+			'CATALYZES': 'Enzymatic catalysis relationships',
+			'INHIBITS': 'Inhibitory relationships',
+			'ACTIVATES': 'Activation relationships',
+			'EXPRESSES': 'Expression relationships',
+			'LOCALIZES_TO': 'Cellular or subcellular localization',
+			'PART_OF': 'Component relationships and hierarchies',
+			'CONVERTS': 'Chemical conversion relationships',
+			'TRANSPORTS': 'Transport and trafficking relationships',
+			'MODIFIES': 'Post-translational modification relationships',
+			'Biotype': 'Biological type classifications',
+			'Unknown': 'Relationships with unspecified types'
+		};
+		
+		return descriptions[relType] || `Biological relationship of type: ${relType}`;
+	}
+
+	function downloadCsv(rows, filename) {
+		if (!rows || rows.length === 0) return;
+		const csvContent = generateCsvContent(rows);
+		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 		const link = document.createElement("a");
 		link.href = URL.createObjectURL(blob);
 		link.setAttribute("download", filename);
@@ -122,8 +333,8 @@ export default function TableView() {
 					Edges ({edgeRows.length})
 				</button>
 				<div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-					<button onClick={downloadNodesCsv}>Download all Nodes (.csv)</button>
-					<button onClick={downloadEdgesCsv}>Download all Edges (.csv)</button>
+					<button onClick={downloadNodesCsv}>Download all Nodes (.zip)</button>
+					<button onClick={downloadEdgesCsv}>Download all Edges (.zip)</button>
 				</div>
 			</div>
 

@@ -18,6 +18,7 @@
     "graphology": "^0.26.0",
     "graphology-layout": "^0.6.1",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "jszip": "^3.10.1",
     "neo4j": "^2.0.0-RC2",
     "neovis.js": "^2.1.0",
     "ogma": "^2.1.1",
